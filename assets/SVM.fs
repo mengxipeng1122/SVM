@@ -2,6 +2,13 @@
 
 const float EPS=1e-6;
 
+const float targetCameraFocusLen = 614.1118;
+const vec3  targetCameraPosition       = vec3( -100000., -100000., -59000. );
+const vec3  targetCameraPointAt        = vec3(       0.,       0., -59000. );
+const float headUp               = 1.;
+const vec3  worldPlanePoint      = vec3( 0., 0., 0. );
+const vec3  worldPlaneVector     = vec3( 0., 0., 1. );
+
 varying vec3 v_texCoord;
 
 // all source images
@@ -27,8 +34,27 @@ uniform float sourceCameraMaxRadius [4];
 uniform vec2  sourceCameraCentroids [4];
 uniform mat4  sourceCameraMatries   [4];
 
+// some parameters for 3D points
+uniform mat4 targetMatrixT ;
+
 // for testing 
 uniform sampler2D data ;
+
+float getIntersectRayPlane ( in vec3 r0,  in vec3 rv,  in vec3 pp,  in vec3 pv, out vec3 ip )
+{
+  float d = dot(pp,pv);
+  float t = (d-dot(r0, pv))/dot(rv, pv);
+  ip = r0+t*rv;
+  if(t>0.)
+    return 1.;
+  else
+    return 0.;
+}
+
+float sdPlane ( vec3 p)
+{
+  return -(p.z);
+}
 
 
 float sdSphere( vec3 p, float s )
@@ -36,33 +62,36 @@ float sdSphere( vec3 p, float s )
     return length(p)-s;
 }
 
-vec2 map( in vec3 pos )
+float map( in vec3 pos )
 {
 
-  vec2 res;
-  res = vec2(sdSphere( pos-vec3( 0.,0., 0.), 0.35), 1.9);
+  float res;
+//  res = sdSphere ( pos-vec3( 0., 0., 0.), 100.);
+  res = sdPlane ( pos );
   return res;
 }
 
 
-vec2 castRay( in vec3 ro, in vec3 rd )
+vec3 castRay ( in vec3 ro, in vec3 rd )
 {
   float tmin = 1.0;
-  float tmax = 20.0;
+  float tmax = 50.0;
 
-  float precis = 0.002;
+  float precis = 2.;
   float t = tmin;
-  float m = -1.0;
+  vec3 pos;
   for( int i=0; i<60; i++ )
   {
-    vec2 res = map( ro+rd*t );
-    if( res.x<precis || t>tmax ) break;
-    t += res.x;
-    m = res.y;
+    float res = map( ro+rd*t );
+    t = res;
+    pos = ro+rd*t;
+    if( res<precis ) break;
   }
 
-  if( t>tmax ) m=-1.0;
-  return vec2( t, m );
+  if( t>tmax )
+    return vec3( 0. );
+  else 
+    return pos;
 }
 
 void showCrossSourceImageMap (vec2 uv)
@@ -163,13 +192,14 @@ vec2 getSourceUndistortedImage ( float no , vec2 uv, vec2 imageSize )
 
 }
 
-void show3DPoint ( float no, vec2 uv )
+void show3DPoint ( float no, vec2 uv, vec3 point3D )
 {
-  float px = getValueFromTexture ( world3DPointsX , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
-  float py = getValueFromTexture ( world3DPointsY , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
-  float pz = getValueFromTexture ( world3DPointsZ , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
+//   float px = getValueFromTexture ( world3DPointsX , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
+//   float py = getValueFromTexture ( world3DPointsY , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
+//   float pz = getValueFromTexture ( world3DPointsZ , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
 
-  vec3 point3D = vec3 ( px, py, pz );
+
+//  vec3 point3D = vec3 ( px, py, pz );
 
   mat4 mtx ; 
 
@@ -260,18 +290,50 @@ void showAll3DPoint ( vec2 uv )
 
 }
 
+void showXYZ ()
+{
+  float zDst = 10000.;
+  float focusLen = 227.;
+  vec2 uv = (v_texCoord.xy+1.)*.5;
+  uv*=vec2( targetImageWidth, targetImageHeight );
+  vec3 r0 = vec3(0., 0., - focusLen -zDst );
+  vec3 rd = normalize( vec3(uv, focusLen ) );
+
+  vec3 pos = castRay (r0, rd);
+  
+  gl_FragColor = vec4( pos, 1. );
+
+  uv = (v_texCoord.xy+1.)*.5;
+
+//  show3DPoint ( 0., uv, pos );
+}
+
 
 void main() {
 
-  vec3 r0 = vec3(0., 0., -10.);
-  vec3 rd = normalize( vec3(v_texCoord.xy, 10.) );
-
-  vec2 color = castRay(r0, rd);
+  // showXYZ ();
 
   vec2 uv = (v_texCoord.xy+1.)*.5;
+  // get point3D 
+  vec3 point3D;
 
-  showAll3DPoint ( uv );
-  // show3DPoint ( 0. ,  uv ) ;
+  vec3 r0 = (targetMatrixT * vec4(0., 0., 0., 1.)).xyz;
+  vec3 rv = (targetMatrixT * vec4(v_texCoord.x*targetImageWidth/2., 
+                                  v_texCoord.y*targetImageHeight/2., 
+                                  targetCameraFocusLen, 0.)).xyz;
+
+  getIntersectRayPlane( r0, rv, worldPlanePoint, worldPlaneVector, point3D); 
+
+
+  // float px = getValueFromTexture ( world3DPointsX , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
+  // float py = getValueFromTexture ( world3DPointsY , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
+  // float pz = getValueFromTexture ( world3DPointsZ , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
+
+  // point3D = vec3 ( px, py, pz );
+
+
+  // showAll3DPoint ( uv );
+  show3DPoint ( 0. ,  uv , point3D ) ;
   // show3DPoint ( 1. ,  uv ) ;
   // show3DPoint ( 2. ,  uv ) ;
   // show3DPoint ( 3. ,  uv ) ;

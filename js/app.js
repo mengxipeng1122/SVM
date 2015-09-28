@@ -49,6 +49,16 @@ sourceCameraMatries[3].set(
       0.576696432734151,        0.815549578110809,       0.0479594632474782,         12416.4353417095,
                      0.,                       0.,                       0.,                       1. 
     );
+
+var targetMatrixT = new THREE.Matrix4();
+targetMatrixT.set(
+     0,       -0.707106781186547,         0.707106781186547,                   -100000,
+     0,        0.707106781186547,         0.707106781186547,                   -100000,
+    -1,                        0,                         0,                    -59000,
+     0,                        0,                         0,                         1
+   );
+
+
    
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -160,9 +170,11 @@ sourceCameraMatries[3].set(
               sourceCameraCentroids : { type : 'v2v',  value : sourceCameraCentroids },
               sourceCameraMatries   : { type : 'm4v',  value : sourceCameraMatries   },
           // world 3D points
-              world3DPointsX        : { type : 't', value : textureWorldPointX  },
-              world3DPointsY        : { type : 't', value : textureWorldPointY  },
-              world3DPointsZ        : { type : 't', value : textureWorldPointZ  },
+              world3DPointsX        : { type : 't',    value : textureWorldPointX  },
+              world3DPointsY        : { type : 't',    value : textureWorldPointY  },
+              world3DPointsZ        : { type : 't',    value : textureWorldPointZ  },
+
+              targetMatrixT         : { type : 'm4' ,  value : targetMatrixT       },
           // for testing 
               data                  : { type : 't', value : textureData },
 
