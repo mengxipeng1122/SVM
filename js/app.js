@@ -1,10 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 // some configure variables
-var screenWidth = 720;
-var screenHeight= 480;
 
-var cameraWidth = 720;
-var cameraHeight= 576;
+var loadTextures = false;
+var screenWidth  = 720;
+var screenHeight = 480;
+
+var cameraWidth  = 720;
+var cameraHeight = 576;
 
 var sourceCameraMaxRadius = [ 223.5400,  232.3587,  216.0200,  220.1189 ];
 var sourceCameraCentroids = [ 
@@ -127,34 +129,50 @@ targetMatrixT.set(
         var defines={};
         defines['USE_MAP']="";
         // some data texture 
-        var textureParameterHi = THREE.ImageUtils.loadTexture('imgs/parameterHi.png');
-        var textureParameterLo = THREE.ImageUtils.loadTexture('imgs/parameterLo.png');
+        var textureParameterHi ;
+        var textureParameterLo ;
         // all source image
-        var textureSourceImage = THREE.ImageUtils.loadTexture('imgs/sourceImage.png');
+        var textureSourceImage ;
         // world point 3D
-        var textureWorldPointX = THREE.ImageUtils.loadTexture('imgs/world3DPointsX.png');
-        var textureWorldPointY = THREE.ImageUtils.loadTexture('imgs/world3DPointsY.png');
-        var textureWorldPointZ = THREE.ImageUtils.loadTexture('imgs/world3DPointsZ.png');
+        var textureWorldPointX ;
+        var textureWorldPointY ;
+        var textureWorldPointZ ;
         // testing
-        var textureData        = THREE.ImageUtils.loadTexture('imgs/data.png'       );
-
+        var textureData        ;
+        // all source image
+        textureSourceImage = THREE.ImageUtils.loadTexture('imgs/sourceImage.png');
         textureSourceImage.magFilter = THREE.NearestFilter;
-        textureParameterHi.magFilter = THREE.NearestFilter;
-        textureParameterLo.magFilter = THREE.NearestFilter;
-        textureWorldPointX.magFilter = THREE.NearestFilter;
-        textureWorldPointY.magFilter = THREE.NearestFilter;
-        textureWorldPointZ.magFilter = THREE.NearestFilter;
-        textureData       .magFilter = THREE.NearestFilter;
-
         textureSourceImage.minFilter = THREE.NearestFilter;
-        textureParameterHi.minFilter = THREE.NearestFilter;
-        textureParameterLo.minFilter = THREE.NearestFilter;
-        textureWorldPointX.minFilter = THREE.NearestFilter;
-        textureWorldPointY.minFilter = THREE.NearestFilter;
-        textureWorldPointZ.minFilter = THREE.NearestFilter;
-        textureData       .minFilter = THREE.NearestFilter;
 
-        var uniforms={
+        if (loadTextures)
+        {
+          // some data texture 
+          textureParameterHi = THREE.ImageUtils.loadTexture('imgs/parameterHi.png');
+          textureParameterLo = THREE.ImageUtils.loadTexture('imgs/parameterLo.png');
+          // world point 3D
+          textureWorldPointX = THREE.ImageUtils.loadTexture('imgs/world3DPointsX.png');
+          textureWorldPointY = THREE.ImageUtils.loadTexture('imgs/world3DPointsY.png');
+          textureWorldPointZ = THREE.ImageUtils.loadTexture('imgs/world3DPointsZ.png');
+          // testing
+          textureData        = THREE.ImageUtils.loadTexture('imgs/data.png'       );
+
+          textureParameterHi.magFilter = THREE.NearestFilter;
+          textureParameterLo.magFilter = THREE.NearestFilter;
+          textureWorldPointX.magFilter = THREE.NearestFilter;
+          textureWorldPointY.magFilter = THREE.NearestFilter;
+          textureWorldPointZ.magFilter = THREE.NearestFilter;
+          textureData       .magFilter = THREE.NearestFilter;
+
+          textureParameterHi.minFilter = THREE.NearestFilter;
+          textureParameterLo.minFilter = THREE.NearestFilter;
+          textureWorldPointX.minFilter = THREE.NearestFilter;
+          textureWorldPointY.minFilter = THREE.NearestFilter;
+          textureWorldPointZ.minFilter = THREE.NearestFilter;
+          textureData       .minFilter = THREE.NearestFilter;
+        }
+
+        var uniforms;
+        uniforms={
           // some parameters
               targetImageWidth : { type: 'f', value : screenWidth },
               targetImageHeight: { type: 'f', value : screenHeight},
@@ -162,23 +180,25 @@ targetMatrixT.set(
               sourceImageHeight: { type: 'f', value : cameraHeight},
           // load all source images
               sourceImage      : { type: 't', value : textureSourceImage },
-          // load all data for merge
-              dataParameterHi  : { type: 't', value : textureParameterHi },
-              dataParameterLo  : { type: 't', value : textureParameterLo },
+              targetMatrixT    : { type : 'm4' ,  value : targetMatrixT  },
           // some parameters 
               sourceCameraMaxRadius : { type : 'fv1',  value : sourceCameraMaxRadius },
               sourceCameraCentroids : { type : 'v2v',  value : sourceCameraCentroids },
               sourceCameraMatries   : { type : 'm4v',  value : sourceCameraMatries   },
-          // world 3D points
-              world3DPointsX        : { type : 't',    value : textureWorldPointX  },
-              world3DPointsY        : { type : 't',    value : textureWorldPointY  },
-              world3DPointsZ        : { type : 't',    value : textureWorldPointZ  },
-
-              targetMatrixT         : { type : 'm4' ,  value : targetMatrixT       },
-          // for testing 
-              data                  : { type : 't', value : textureData },
 
             };
+        if(loadTextures)
+        {
+          // load all data for merge
+          uniforms['dataParameterHi'] = { type: 't', value : textureParameterHi };
+          uniforms['dataParameterLo'] = { type: 't', value : textureParameterLo };
+          // world 3D points
+          uniforms['world3DPointsX' ] = { type : 't',    value : textureWorldPointX  };
+          uniforms['world3DPointsY' ] = { type : 't',    value : textureWorldPointY  };
+          uniforms['world3DPointsZ' ] = { type : 't',    value : textureWorldPointZ  };
+          // for testing 
+          uniforms['data'           ] = { type : 't', value : textureData };
+        }
         var vertexShader   =  getSourceSynch('assets/SVM.vs');
         var fragmentShader =  getSourceSynch('assets/SVM.fs');
         var material = new THREE.ShaderMaterial({
