@@ -2,15 +2,21 @@
 
 const float EPS=1e-6;
 
+////////////////////////////////////////////////////////////////////////////////
+// parameters
 const float targetCameraFocusLen = 614.1118;
-const vec3  targetCameraPosition       = vec3( -100000., -100000., -59000. );
-const vec3  targetCameraPointAt        = vec3(       0.,       0., -59000. );
+const vec3  targetCameraPosition = vec3( -100000., -100000., -59000. );
+const vec3  targetCameraPointAt  = vec3(       0.,       0., -59000. );
 const float headUp               = 1.;
 const vec3  worldPlanePoint      = vec3( 0., 0., 0. );
 const vec3  worldPlaneVector     = vec3( 0., 0., 1. );
 
+////////////////////////////////////////////////////////////////////////////////
+// input datas
 varying vec3 v_texCoord;
 
+////////////////////////////////////////////////////////////////////////////////
+// all uniforms 
 // all source images
 uniform sampler2D sourceImage ;
 
@@ -40,6 +46,9 @@ uniform mat4 targetMatrixT ;
 // for testing 
 uniform sampler2D data ;
 
+// get the intersect point a ray ane a plane
+//  return   1. -- intersect
+//  return   0. -- not intersect
 float getIntersectRayPlane ( in vec3 r0,  in vec3 rv,  in vec3 pp,  in vec3 pv, out vec3 ip )
 {
   float d = dot(pp,pv);
@@ -56,7 +65,6 @@ float sdPlane ( vec3 p)
   return -(p.z);
 }
 
-
 float sdSphere( vec3 p, float s )
 {
     return length(p)-s;
@@ -66,17 +74,14 @@ float map( in vec3 pos )
 {
 
   float res;
-//  res = sdSphere ( pos-vec3( 0., 0., 0.), 100.);
   res = sdPlane ( pos );
   return res;
 }
-
 
 vec3 castRay ( in vec3 ro, in vec3 rd )
 {
   float tmin = 1.0;
   float tmax = 50.0;
-
   float precis = 2.;
   float t = tmin;
   vec3 pos;
@@ -97,10 +102,6 @@ vec3 castRay ( in vec3 ro, in vec3 rd )
 void showCrossSourceImageMap (vec2 uv)
 {
   gl_FragColor = texture2D( sourceImage , uv);
-  // if (uv.x<0. && uv.y>0.)  gl_FragColor = texture2D( sourceImageFront, uv+vec2(1.,0.));
-  // if (uv.x>0. && uv.y>0.)  gl_FragColor = texture2D( sourceImageRear , uv+vec2(0.,0.));
-  // if (uv.x<0. && uv.y<0.)  gl_FragColor = texture2D( sourceImageLeft , uv+vec2(1.,1.));
-  // if (uv.x>0. && uv.y<0.)  gl_FragColor = texture2D( sourceImageRight, uv+vec2(0.,1.));
 }
 
 vec3 getSourceColor ( float no, float x, float y, float alpha)
@@ -194,13 +195,6 @@ vec2 getSourceUndistortedImage ( float no , vec2 uv, vec2 imageSize )
 
 void show3DPoint ( float no, vec2 uv, vec3 point3D )
 {
-//   float px = getValueFromTexture ( world3DPointsX , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
-//   float py = getValueFromTexture ( world3DPointsY , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
-//   float pz = getValueFromTexture ( world3DPointsZ , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
-
-
-//  vec3 point3D = vec3 ( px, py, pz );
-
   mat4 mtx ; 
 
   if (no>=-0.5 && no <0.5) mtx = sourceCameraMatries [0] ;
@@ -227,10 +221,6 @@ void show3DPoint ( float no, vec2 uv, vec3 point3D )
   if ( no >  1.5 && no < 2.5 ) duv = duv*.5+vec2(.0,.0);
   if ( no >  2.5 && no < 3.5 ) duv = duv*.5+vec2(.5,.0);
   gl_FragColor = texture2D( sourceImage , duv);
-  //gl_FragColor = vec4 (  duv , 0. , 1. );
-
-
-
 }
 
 void showAll3DPoint ( vec2 uv )
@@ -243,7 +233,6 @@ void showAll3DPoint ( vec2 uv )
 
   mat4 mtx ; 
 
-
   vec2 doff[4];
   doff[0] = vec2(.0,.5);
   doff[1] = vec2(.5,.5);
@@ -255,9 +244,7 @@ void showAll3DPoint ( vec2 uv )
 
   for ( int i=0; i<4 ; i++ )
   {
-
     mtx = sourceCameraMatries [i] ;
-
     vec4 pointTargetFrame = mtx * vec4 ( point3D, 1. )  ;
 
     vec2 point2D = pointTargetFrame.xy / pointTargetFrame.z ;
@@ -276,7 +263,6 @@ void showAll3DPoint ( vec2 uv )
     duv = duv*.5+doff[i];
     rgb += texture2D( sourceImage , duv) . rgb;
   }
-
 
   
   gl_FragColor =  vec4(vec3(0.), 1.);
@@ -305,7 +291,7 @@ void showXYZ ()
 
   uv = (v_texCoord.xy+1.)*.5;
 
-//  show3DPoint ( 0., uv, pos );
+  show3DPoint ( 0., uv, pos );
 }
 
 
@@ -324,34 +310,7 @@ void main() {
 
   getIntersectRayPlane( r0, rv, worldPlanePoint, worldPlaneVector, point3D); 
 
-
-  // float px = getValueFromTexture ( world3DPointsX , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
-  // float py = getValueFromTexture ( world3DPointsY , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
-  // float pz = getValueFromTexture ( world3DPointsZ , vec2 ( targetImageWidth , targetImageHeight ) , uv ) ;
-
-  // point3D = vec3 ( px, py, pz );
-
-
-  // showAll3DPoint ( uv );
   show3DPoint ( 0. ,  uv , point3D ) ;
-  // show3DPoint ( 1. ,  uv ) ;
-  // show3DPoint ( 2. ,  uv ) ;
-  // show3DPoint ( 3. ,  uv ) ;
-
-  // showDataPng ( world3DPointsX, uv, -1e5, 1e5 );
-  // showDataPng ( world3DPointsY, uv, -1e5, 1e5 );
-  // showDataPng ( world3DPointsZ, uv, -1e5, 1e5 );
-
-  // showSourceUndistortedImage ( 0. , uv, vec2 ( sourceImageWidth, sourceImageHeight ) ) ;
-  // showCrossSourceImageMap (uv);
-  // showDataPng ( data , uv, 0. , sourceImageWidth );
-  // float f = getValueFromTexture ( data  , vec2( targetImageWidth , targetImageHeight), uv);
-  // if( abs(f- -65533.) <EPS)
-  //   gl_FragColor = vec4(vec3(1.), 1.);
-  // else
-  //   gl_FragColor = vec4(vec3(0.), 1.);
-
-  // showMergeImage (uv);
 
 }
 
