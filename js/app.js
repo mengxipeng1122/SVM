@@ -139,6 +139,9 @@ targetMatrixT.set(
         var textureWorldPointZ ;
         // testing
         var textureData        ;
+        // mouse position
+        //var mouseX = screenWidth/2;
+        var mouseX = .2;
         // all source image
         textureSourceImage = THREE.ImageUtils.loadTexture('imgs/sourceImage.png');
         textureSourceImage.magFilter = THREE.NearestFilter;
@@ -185,6 +188,8 @@ targetMatrixT.set(
               sourceCameraMaxRadius : { type : 'fv1',  value : sourceCameraMaxRadius },
               sourceCameraCentroids : { type : 'v2v',  value : sourceCameraCentroids },
               sourceCameraMatries   : { type : 'm4v',  value : sourceCameraMatries   },
+          // mouse position
+              mouseX                : { type : 'f',    value : mouseX           },
 
             };
         if(loadTextures)
@@ -207,6 +212,7 @@ targetMatrixT.set(
             , vertexShader     : vertexShader
             , fragmentShader   : fragmentShader
           });
+
         var plane = new THREE.Mesh(planeGeometry, material);
 
         // rotate and position the plane
@@ -217,12 +223,28 @@ targetMatrixT.set(
         // add the plane to the scene
         scene.add(plane);
 
-        // add subtle ambient lighting
-        var ambientLight = new THREE.AmbientLight(0xffffff);
-        //scene.add(ambientLight);
+        var mousePressed=false;
 
+        var webGLOutputer = document.getElementById('WebGL-output');
         // add the output of the renderer to the html element
-        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+        webGLOutputer.appendChild(renderer.domElement);
+
+        // add the mouse handle function for mouse input
+        webGLOutputer.onmousedown = function (e)
+          {
+            mousePressed = true;     
+          }
+        webGLOutputer.onmouseup = function (e)
+          {
+            mousePressed = false;    
+          }
+        webGLOutputer.onmousemove = function (e)
+          {
+            if (mousePressed)
+            {
+               mouseX = e.layerX;
+            }
+          }
 
         // add FPS stats
         var stats = createStats();
@@ -234,8 +256,11 @@ targetMatrixT.set(
         function render() 
         {
             requestAnimationFrame(render);
-            renderer.render(scene, camera);
 
+            uniforms.mouseX.value = mouseX;
+            uniforms.mouseX.needsUpdate = true;
+
+            renderer.render(scene, camera);
             stats.update();
         }
 

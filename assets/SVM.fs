@@ -43,6 +43,9 @@ uniform mat4  sourceCameraMatries   [4];
 // some parameters for 3D points
 uniform mat4 targetMatrixT ;
 
+// some parameters for UI input
+uniform float mouseX ;
+
 // for testing 
 uniform sampler2D data ;
 
@@ -298,8 +301,12 @@ void showXYZ ()
 void main() {
 
   // showXYZ ();
-
   vec2 uv = (v_texCoord.xy+1.)*.5;
+
+
+  if( uv.x > mouseX / targetImageWidth )
+  {
+
   // get point3D 
   vec3 point3D;
 
@@ -311,6 +318,12 @@ void main() {
   getIntersectRayPlane( r0, rv, worldPlanePoint, worldPlaneVector, point3D); 
 
   show3DPoint ( 0. ,  uv , point3D ) ;
+
+  }
+  else
+  {
+     gl_FragColor = texture2D( sourceImage , uv);
+  }
 
 }
 
