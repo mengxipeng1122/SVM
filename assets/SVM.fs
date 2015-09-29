@@ -1,6 +1,7 @@
 
 
 const float EPS=1e-6;
+const float precis = 20.;
 
 ////////////////////////////////////////////////////////////////////////////////
 // parameters
@@ -83,20 +84,18 @@ float map( in vec3 pos )
 
 vec3 castRay ( in vec3 ro, in vec3 rd )
 {
-  float tmin = 1.0;
-  float tmax = 50.0;
-  float precis = 2.;
-  float t = tmin;
+  float t = 0.;
   vec3 pos;
-  for( int i=0; i<60; i++ )
+  rd = normalize( rd );
+  pos = ro+rd*t;
+  for( int i=0; i<50; i++ )
   {
-    float res = map( ro+rd*t );
-    t = res;
-    pos = ro+rd*t;
-    if( res<precis ) break;
+    t = map( pos );
+    pos = pos+rd*t;
+    if( t<precis ) break;
   }
 
-  if( t>tmax )
+  if( t>precis )
     return vec3( 0. );
   else 
     return pos;
@@ -303,27 +302,27 @@ void main() {
   // showXYZ ();
   vec2 uv = (v_texCoord.xy+1.)*.5;
 
-
-  if( uv.x > mouseX / targetImageWidth )
-  {
-
+  // show 3D point with calculate point3D
   // get point3D 
   vec3 point3D;
-
   vec3 r0 = (targetMatrixT * vec4(0., 0., 0., 1.)).xyz;
-  vec3 rv = (targetMatrixT * vec4(v_texCoord.x*targetImageWidth/2., 
+  vec3 rv = (targetMatrixT * vec4(v_texCoord.x*targetImageWidth /2., 
                                   v_texCoord.y*targetImageHeight/2., 
                                   targetCameraFocusLen, 0.)).xyz;
 
-  getIntersectRayPlane( r0, rv, worldPlanePoint, worldPlaneVector, point3D); 
-
-  show3DPoint ( 0. ,  uv , point3D ) ;
-
+  if( uv.x > mouseX / targetImageWidth )
+  {
+    getIntersectRayPlane( r0, rv, worldPlanePoint, worldPlaneVector, point3D); 
+    
   }
   else
   {
-     gl_FragColor = texture2D( sourceImage , uv);
+    point3D = castRay( r0, rv );
+    // show 3D point with new algorithm
   }
 
+  show3DPoint ( 0. ,  uv , point3D ) ;
+
+  //  gl_FragColor = texture2D( sourceImage , uv);
 }
 

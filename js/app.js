@@ -22,6 +22,8 @@ var sourceCameraMatries   = [
         new THREE.Matrix4(),
        ];
 
+var uniforms;
+
 // initial all matries
 sourceCameraMatries[0].set(
        213.159013191336,         291.784798718661,         231.709935655638,         8492378.57446373,
@@ -52,13 +54,13 @@ sourceCameraMatries[3].set(
                      0.,                       0.,                       0.,                       1. 
     );
 
-var targetMatrixT = new THREE.Matrix4();
-targetMatrixT.set(
-     0,       -0.707106781186547,         0.707106781186547,                   -100000,
-     0,        0.707106781186547,         0.707106781186547,                   -100000,
-    -1,                        0,                         0,                    -59000,
-     0,                        0,                         0,                         1
-   );
+// var targetMatrixT = new THREE.Matrix4();
+// targetMatrixT.set(
+//      0,       -0.707106781186547,         0.707106781186547,                   -100000,
+//      0,        0.707106781186547,         0.707106781186547,                   -100000,
+//     -1,                        0,                         0,                    -59000,
+//      0,                        0,                         0,                         1
+//    );
 
 
    
@@ -140,8 +142,7 @@ targetMatrixT.set(
         // testing
         var textureData        ;
         // mouse position
-        //var mouseX = screenWidth/2;
-        var mouseX = .2;
+        var mouseX = screenWidth/2;
         // all source image
         textureSourceImage = THREE.ImageUtils.loadTexture('imgs/sourceImage.png');
         textureSourceImage.magFilter = THREE.NearestFilter;
@@ -174,7 +175,6 @@ targetMatrixT.set(
           textureData       .minFilter = THREE.NearestFilter;
         }
 
-        var uniforms;
         uniforms={
           // some parameters
               targetImageWidth : { type: 'f', value : screenWidth },
@@ -183,7 +183,7 @@ targetMatrixT.set(
               sourceImageHeight: { type: 'f', value : cameraHeight},
           // load all source images
               sourceImage      : { type: 't', value : textureSourceImage },
-              targetMatrixT    : { type : 'm4' ,  value : targetMatrixT  },
+              targetMatrixT    : { type : 'm4' ,  value : new THREE.Matrix4()  },
           // some parameters 
               sourceCameraMaxRadius : { type : 'fv1',  value : sourceCameraMaxRadius },
               sourceCameraCentroids : { type : 'v2v',  value : sourceCameraCentroids },
@@ -232,6 +232,7 @@ targetMatrixT.set(
         // add the mouse handle function for mouse input
         webGLOutputer.onmousedown = function (e)
           {
+            mouseX = e.layerX;
             mousePressed = true;     
           }
         webGLOutputer.onmouseup = function (e)
@@ -267,4 +268,42 @@ targetMatrixT.set(
     }
 
     window.onload = init;
+
+// read some parameters file for targetMatrixT parameter
+$.get('assets/targetMatrixT.txt', function(data) {
+  var rawArray  = data.split(' ');
+  var dataArray = [];
+  var numData=0;
+  for (var i=0;i<rawArray.length;i++)
+  {
+    var array = rawArray[i];
+    if( array != '')
+    {
+      dataArray[numData]=array.valueOf();
+      numData+=1;
+    }
+  }
+  var mat = new THREE.Matrix4();
+  mat.set(
+    dataArray[ 0] 
+   ,dataArray[ 1] 
+   ,dataArray[ 2] 
+   ,dataArray[ 3] 
+   ,dataArray[ 4] 
+   ,dataArray[ 5] 
+   ,dataArray[ 6] 
+   ,dataArray[ 7] 
+   ,dataArray[ 8] 
+   ,dataArray[ 9] 
+   ,dataArray[10] 
+   ,dataArray[11] 
+   ,dataArray[12] 
+   ,dataArray[13] 
+   ,dataArray[14] 
+   ,dataArray[15] 
+  );
+  uniforms.targetMatrixT.value       = mat;
+  uniforms.targetMatrixT.needsUpdate = true;
+}, 'text');
+
 
