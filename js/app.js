@@ -269,8 +269,9 @@ sourceCameraMatries[3].set(
 
     window.onload = init;
 
-// read some parameters file for targetMatrixT parameter
-$.get('assets/targetMatrixT.txt', function(data) {
+
+function getMatrFromText( data )
+{
   var rawArray  = data.split(' ');
   var dataArray = [];
   var numData=0;
@@ -302,7 +303,12 @@ $.get('assets/targetMatrixT.txt', function(data) {
    ,dataArray[14] 
    ,dataArray[15] 
   );
-  uniforms.targetMatrixT.value       = mat;
+  return mat;
+}
+
+// read some parameters file for targetMatrixT parameter
+$.get('assets/targetMatrixT.txt', function(data) {
+  uniforms.targetMatrixT.value       = getMatrFromText(data);
   uniforms.targetMatrixT.needsUpdate = true;
 }, 'text');
 
