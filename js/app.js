@@ -22,7 +22,13 @@ var sourceCameraMatries   = [
         new THREE.Matrix4(),
        ];
 
+
+var targetCameraFocusLen = 614.1118;
+
 var uniforms;
+
+var control;
+
 
 // initial all matries
 sourceCameraMatries[0].set(
@@ -54,16 +60,6 @@ sourceCameraMatries[3].set(
                      0.,                       0.,                       0.,                       1. 
     );
 
-// var targetMatrixT = new THREE.Matrix4();
-// targetMatrixT.set(
-//      0,       -0.707106781186547,         0.707106781186547,                   -100000,
-//      0,        0.707106781186547,         0.707106781186547,                   -100000,
-//     -1,                        0,                         0,                    -59000,
-//      0,                        0,                         0,                         1
-//    );
-
-
-   
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -97,13 +93,9 @@ sourceCameraMatries[3].set(
     return (req.status == 200) ? req.responseText : null;
   };
 
-  
-
-
     // once everything is loaded, we run our Three.js stuff.
     function init() 
     {
-
 
         // create a scene, that will hold all our elements such as objects, cameras and lights.
         var scene = new THREE.Scene();
@@ -142,7 +134,7 @@ sourceCameraMatries[3].set(
         // testing
         var textureData        ;
         // mouse position
-        var mouseX = screenWidth/2;
+        var mouseX  = screenWidth/2;
         // all source image
         textureSourceImage = THREE.ImageUtils.loadTexture('imgs/sourceImage.png');
         textureSourceImage.magFilter = THREE.NearestFilter;
@@ -182,14 +174,18 @@ sourceCameraMatries[3].set(
               sourceImageWidth : { type: 'f', value : cameraWidth },
               sourceImageHeight: { type: 'f', value : cameraHeight},
           // load all source images
-              sourceImage      : { type: 't', value : textureSourceImage },
-              targetMatrixT    : { type : 'm4' ,  value : new THREE.Matrix4()  },
+              sourceImage          : { type : 't',  value : textureSourceImage },
+              targetCameraPosition : { type : 'v3', value : new THREE.Vector3(0, 10000, 0 ) }, 
+              targetCameraPointAt  : { type : 'v3', value : new THREE.Vector3(0,     0, 0 ) }, 
+              targetMatrixT        : { type : 'm4', value : new THREE.Matrix4()  },
           // some parameters 
               sourceCameraMaxRadius : { type : 'fv1',  value : sourceCameraMaxRadius },
               sourceCameraCentroids : { type : 'v2v',  value : sourceCameraCentroids },
               sourceCameraMatries   : { type : 'm4v',  value : sourceCameraMatries   },
           // mouse position
-              mouseX                : { type : 'f',    value : mouseX           },
+              mouseX                : { type : 'f',    value : mouseX                },
+          // target camera focus len
+              targetCameraFocusLen  : { type : 'f',    value : targetCameraFocusLen  },
 
             };
         if(loadTextures)
@@ -250,6 +246,25 @@ sourceCameraMatries[3].set(
         // add FPS stats
         var stats = createStats();
 
+        // add control
+        control = new function()
+        {
+          this.targetCameraFocusLen = 614.1118;
+        };
+
+        function addControls( controlObject)
+        {
+          var gui = new dat.GUI();
+          gui.add(controlObject, 'targetCameraFocusLen', 0, 800).onChange(function(value)
+                  {
+                    console.log(value);
+                    controlObject.targetCameraFocusLen=value;
+                        });
+
+        }
+
+        addControls(control);
+
         document.body.appendChild( stats.domElement);
 
         render();
@@ -258,8 +273,13 @@ sourceCameraMatries[3].set(
         {
             requestAnimationFrame(render);
 
+            //control.update();
+
             uniforms.mouseX.value = mouseX;
             uniforms.mouseX.needsUpdate = true;
+
+            uniforms.targetCameraFocusLen.value = control.targetCameraFocusLen;
+            uniforms.targetCameraFocusLen.needsUpdate = true;
 
             renderer.render(scene, camera);
             stats.update();

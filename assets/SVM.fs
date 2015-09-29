@@ -1,13 +1,12 @@
 
 
-const float EPS=1e-6;
-const float precis = 20.;
+const float EPS     = 1e-6;
+const float precis  = 20.;
+const int   maxIter = 100;
+const float sphereRadius  = 30000.;
 
 ////////////////////////////////////////////////////////////////////////////////
 // parameters
-const float targetCameraFocusLen = 614.1118;
-const vec3  targetCameraPosition = vec3( -100000., -100000., -59000. );
-const vec3  targetCameraPointAt  = vec3(       0.,       0., -59000. );
 const float headUp               = 1.;
 const vec3  worldPlanePoint      = vec3( 0., 0., 0. );
 const vec3  worldPlaneVector     = vec3( 0., 0., 1. );
@@ -22,10 +21,10 @@ varying vec3 v_texCoord;
 uniform sampler2D sourceImage ;
 
 // parameters
-uniform float targetImageWidth ;
-uniform float targetImageHeight;
-uniform float sourceImageWidth ;
-uniform float sourceImageHeight;
+uniform float targetImageWidth  ;
+uniform float targetImageHeight ;
+uniform float sourceImageWidth  ;
+uniform float sourceImageHeight ;
 
 // all data for merging
 uniform sampler2D dataParameterHi ;
@@ -43,9 +42,10 @@ uniform mat4  sourceCameraMatries   [4];
 
 // some parameters for 3D points
 uniform mat4 targetMatrixT ;
+uniform float targetCameraFocusLen;
 
 // some parameters for UI input
-uniform float mouseX ;
+uniform float mouseX  ;
 
 // for testing 
 uniform sampler2D data ;
@@ -64,12 +64,22 @@ float getIntersectRayPlane ( in vec3 r0,  in vec3 rv,  in vec3 pp,  in vec3 pv, 
     return 0.;
 }
 
+float opU( float d1, float d2 )
+{
+  return min(d1,d2);
+}
+
+float opS( float d1, float d2 )
+{
+  return max(-d1,d2);
+}
+
 float sdPlane ( vec3 p)
 {
   return -(p.z);
 }
 
-float sdSphere( vec3 p, float s )
+float sdSphere ( vec3 p, float s )
 {
     return length(p)-s;
 }
@@ -79,6 +89,7 @@ float map( in vec3 pos )
 
   float res;
   res = sdPlane ( pos );
+  //res = sdSphere (  pos , sphereRadius);
   return res;
 }
 
@@ -88,11 +99,11 @@ vec3 castRay ( in vec3 ro, in vec3 rd )
   vec3 pos;
   rd = normalize( rd );
   pos = ro+rd*t;
-  for( int i=0; i<50; i++ )
+  for( int i=0; i< maxIter ; i++ )
   {
     t = map( pos );
     pos = pos+rd*t;
-    if( t<precis ) break;
+    if( abs(t)<precis ) break;
   }
 
   if( t>precis )
@@ -310,15 +321,15 @@ void main() {
                                   v_texCoord.y*targetImageHeight/2., 
                                   targetCameraFocusLen, 0.)).xyz;
 
-  if( uv.x > mouseX / targetImageWidth )
+  //if( uv.x > mouseX / targetImageWidth )
+  if( 1.>0.)
   {
-    getIntersectRayPlane( r0, rv, worldPlanePoint, worldPlaneVector, point3D); 
-    
+    getIntersectRayPlane ( r0, rv, worldPlanePoint, worldPlaneVector, point3D); 
   }
   else
   {
-    point3D = castRay( r0, rv );
     // show 3D point with new algorithm
+    point3D = castRay ( r0, rv );
   }
 
   show3DPoint ( 0. ,  uv , point3D ) ;
