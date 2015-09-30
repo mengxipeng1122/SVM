@@ -9,7 +9,7 @@ const float sphereRadius  = 30000.;
 // parameters
 const float headUp               = 1.;
 const vec3  worldPlanePoint      = vec3( 0., 0., 0. );
-const vec3  worldPlaneVector     = vec3( 0., 0., 1. );
+const vec3  worldPlaneVector     = vec3( 0., 1., 0. );
 
 ////////////////////////////////////////////////////////////////////////////////
 // input datas

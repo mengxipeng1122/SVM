@@ -93,243 +93,245 @@ sourceCameraMatries[3].set(
     return (req.status == 200) ? req.responseText : null;
   };
 
-    // once everything is loaded, we run our Three.js stuff.
-    function init() 
-    {
-
-        // create a scene, that will hold all our elements such as objects, cameras and lights.
-        var scene = new THREE.Scene();
-
-        // create a camera, which defines where we're looking at.
-        var camera = new THREE.OrthographicCamera( screenWidth /-2, screenWidth / 2, screenHeight/ 2, screenHeight/-2, .1, 15000);
-        // position and point the camera to the center of the scene
-        camera.position.x = 0;
-        camera.position.y = 0;
-        camera.position.z = 100;
-        camera.lookAt(scene.position);
-        scene.add(camera);
-
-        // create a render and set the size
-        var renderer = new THREE.WebGLRenderer();
-
-        //renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
-        renderer.setSize(screenWidth, screenHeight);
-        renderer.shadowMapEnabled = true;
-
-        // create the ground plane
-        var planeGeometry = new THREE.PlaneGeometry(720, 576, 1, 1);
-        var planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
-        // 
-        var defines={};
-        defines['USE_MAP']="";
-        // some data texture 
-        var textureParameterHi ;
-        var textureParameterLo ;
-        // all source image
-        var textureSourceImage ;
-        // world point 3D
-        var textureWorldPointX ;
-        var textureWorldPointY ;
-        var textureWorldPointZ ;
-        // testing
-        var textureData        ;
-        // mouse position
-        var mouseX  = screenWidth/2;
-        // all source image
-        textureSourceImage = THREE.ImageUtils.loadTexture('imgs/sourceImage.png');
-        textureSourceImage.magFilter = THREE.NearestFilter;
-        textureSourceImage.minFilter = THREE.NearestFilter;
-
-        if (loadTextures)
-        {
-          // some data texture 
-          textureParameterHi = THREE.ImageUtils.loadTexture('imgs/parameterHi.png');
-          textureParameterLo = THREE.ImageUtils.loadTexture('imgs/parameterLo.png');
-          // world point 3D
-          textureWorldPointX = THREE.ImageUtils.loadTexture('imgs/world3DPointsX.png');
-          textureWorldPointY = THREE.ImageUtils.loadTexture('imgs/world3DPointsY.png');
-          textureWorldPointZ = THREE.ImageUtils.loadTexture('imgs/world3DPointsZ.png');
-          // testing
-          textureData        = THREE.ImageUtils.loadTexture('imgs/data.png'       );
-
-          textureParameterHi.magFilter = THREE.NearestFilter;
-          textureParameterLo.magFilter = THREE.NearestFilter;
-          textureWorldPointX.magFilter = THREE.NearestFilter;
-          textureWorldPointY.magFilter = THREE.NearestFilter;
-          textureWorldPointZ.magFilter = THREE.NearestFilter;
-          textureData       .magFilter = THREE.NearestFilter;
-
-          textureParameterHi.minFilter = THREE.NearestFilter;
-          textureParameterLo.minFilter = THREE.NearestFilter;
-          textureWorldPointX.minFilter = THREE.NearestFilter;
-          textureWorldPointY.minFilter = THREE.NearestFilter;
-          textureWorldPointZ.minFilter = THREE.NearestFilter;
-          textureData       .minFilter = THREE.NearestFilter;
-        }
-
-        uniforms={
-          // some parameters
-              targetImageWidth : { type: 'f', value : screenWidth },
-              targetImageHeight: { type: 'f', value : screenHeight},
-              sourceImageWidth : { type: 'f', value : cameraWidth },
-              sourceImageHeight: { type: 'f', value : cameraHeight},
-          // load all source images
-              sourceImage          : { type : 't',  value : textureSourceImage },
-              targetCameraPosition : { type : 'v3', value : new THREE.Vector3(0, 10000, 0 ) }, 
-              targetCameraPointAt  : { type : 'v3', value : new THREE.Vector3(0,     0, 0 ) }, 
-              targetMatrixT        : { type : 'm4', value : new THREE.Matrix4()  },
-          // some parameters 
-              sourceCameraMaxRadius : { type : 'fv1',  value : sourceCameraMaxRadius },
-              sourceCameraCentroids : { type : 'v2v',  value : sourceCameraCentroids },
-              sourceCameraMatries   : { type : 'm4v',  value : sourceCameraMatries   },
-          // mouse position
-              mouseX                : { type : 'f',    value : mouseX                },
-          // target camera focus len
-              targetCameraFocusLen  : { type : 'f',    value : targetCameraFocusLen  },
-
-            };
-        if(loadTextures)
-        {
-          // load all data for merge
-          uniforms['dataParameterHi'] = { type: 't', value : textureParameterHi };
-          uniforms['dataParameterLo'] = { type: 't', value : textureParameterLo };
-          // world 3D points
-          uniforms['world3DPointsX' ] = { type : 't',    value : textureWorldPointX  };
-          uniforms['world3DPointsY' ] = { type : 't',    value : textureWorldPointY  };
-          uniforms['world3DPointsZ' ] = { type : 't',    value : textureWorldPointZ  };
-          // for testing 
-          uniforms['data'           ] = { type : 't', value : textureData };
-        }
-        var vertexShader   =  getSourceSynch('assets/SVM.vs');
-        var fragmentShader =  getSourceSynch('assets/SVM.fs');
-        var material = new THREE.ShaderMaterial({
-              defines          : defines
-            , uniforms         : uniforms
-            , vertexShader     : vertexShader
-            , fragmentShader   : fragmentShader
-          });
-
-        var plane = new THREE.Mesh(planeGeometry, material);
-
-        // rotate and position the plane
-        plane.position.x = 0;
-        plane.position.y = 0;
-        plane.position.z = 0;
-
-        // add the plane to the scene
-        scene.add(plane);
-
-        var mousePressed=false;
-
-        var webGLOutputer = document.getElementById('WebGL-output');
-        // add the output of the renderer to the html element
-        webGLOutputer.appendChild(renderer.domElement);
-
-        // add the mouse handle function for mouse input
-        webGLOutputer.onmousedown = function (e)
-          {
-            mouseX = e.layerX;
-            mousePressed = true;     
-          }
-        webGLOutputer.onmouseup = function (e)
-          {
-            mousePressed = false;    
-          }
-        webGLOutputer.onmousemove = function (e)
-          {
-            if (mousePressed)
-            {
-               mouseX = e.layerX;
-            }
-          }
-
-        // add FPS stats
-        var stats = createStats();
-
-        // add control
-        control = new function()
-        {
-          this.targetCameraFocusLen = 614.1118;
-        };
-
-        function addControls( controlObject)
-        {
-          var gui = new dat.GUI();
-          gui.add(controlObject, 'targetCameraFocusLen', 0, 800).onChange(function(value)
-                  {
-                    console.log(value);
-                    controlObject.targetCameraFocusLen=value;
-                        });
-
-        }
-
-        addControls(control);
-
-        document.body.appendChild( stats.domElement);
-
-        render();
-
-        function render() 
-        {
-            requestAnimationFrame(render);
-
-            //control.update();
-
-            uniforms.mouseX.value = mouseX;
-            uniforms.mouseX.needsUpdate = true;
-
-            uniforms.targetCameraFocusLen.value = control.targetCameraFocusLen;
-            uniforms.targetCameraFocusLen.needsUpdate = true;
-
-            renderer.render(scene, camera);
-            stats.update();
-        }
-
-    }
-
-    window.onload = init;
-
-
-function getMatrFromText( data )
-{
-  var rawArray  = data.split(' ');
-  var dataArray = [];
-  var numData=0;
-  for (var i=0;i<rawArray.length;i++)
+  // once everything is loaded, we run our Three.js stuff.
+  function init() 
   {
-    var array = rawArray[i];
-    if( array != '')
-    {
-      dataArray[numData]=array.valueOf();
-      numData+=1;
-    }
+
+      // create a scene, that will hold all our elements such as objects, cameras and lights.
+      var scene = new THREE.Scene();
+
+      // create a camera, which defines where we're looking at.
+      var camera = new THREE.OrthographicCamera( screenWidth /-2, screenWidth / 2, screenHeight/ 2, screenHeight/-2, .1, 15000);
+      // position and point the camera to the center of the scene
+      camera.position.x = 0;
+      camera.position.y = 0;
+      camera.position.z = 100;
+      camera.lookAt(scene.position);
+      scene.add(camera);
+
+      // create a render and set the size
+      var renderer = new THREE.WebGLRenderer();
+
+      //renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
+      renderer.setSize(screenWidth, screenHeight);
+      renderer.shadowMapEnabled = true;
+
+      // create the ground plane
+      var planeGeometry = new THREE.PlaneGeometry(720, 576, 1, 1);
+      var planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+      // 
+      var defines={};
+      defines['USE_MAP']="";
+      // some data texture 
+      var textureParameterHi ;
+      var textureParameterLo ;
+      // all source image
+      var textureSourceImage ;
+      // world point 3D
+      var textureWorldPointX ;
+      var textureWorldPointY ;
+      var textureWorldPointZ ;
+      // testing
+      var textureData        ;
+      // mouse position
+      var mouseX  = screenWidth/2;
+      // all source image
+      textureSourceImage = THREE.ImageUtils.loadTexture('imgs/sourceImage.png');
+      textureSourceImage.magFilter = THREE.NearestFilter;
+      textureSourceImage.minFilter = THREE.NearestFilter;
+
+      if (loadTextures)
+      {
+        // some data texture 
+        textureParameterHi = THREE.ImageUtils.loadTexture('imgs/parameterHi.png');
+        textureParameterLo = THREE.ImageUtils.loadTexture('imgs/parameterLo.png');
+        // world point 3D
+        textureWorldPointX = THREE.ImageUtils.loadTexture('imgs/world3DPointsX.png');
+        textureWorldPointY = THREE.ImageUtils.loadTexture('imgs/world3DPointsY.png');
+        textureWorldPointZ = THREE.ImageUtils.loadTexture('imgs/world3DPointsZ.png');
+        // testing
+        textureData        = THREE.ImageUtils.loadTexture('imgs/data.png'       );
+
+        textureParameterHi.magFilter = THREE.NearestFilter;
+        textureParameterLo.magFilter = THREE.NearestFilter;
+        textureWorldPointX.magFilter = THREE.NearestFilter;
+        textureWorldPointY.magFilter = THREE.NearestFilter;
+        textureWorldPointZ.magFilter = THREE.NearestFilter;
+        textureData       .magFilter = THREE.NearestFilter;
+
+        textureParameterHi.minFilter = THREE.NearestFilter;
+        textureParameterLo.minFilter = THREE.NearestFilter;
+        textureWorldPointX.minFilter = THREE.NearestFilter;
+        textureWorldPointY.minFilter = THREE.NearestFilter;
+        textureWorldPointZ.minFilter = THREE.NearestFilter;
+        textureData       .minFilter = THREE.NearestFilter;
+      }
+
+      uniforms={
+        // some parameters
+            targetImageWidth : { type: 'f', value : screenWidth },
+            targetImageHeight: { type: 'f', value : screenHeight},
+            sourceImageWidth : { type: 'f', value : cameraWidth },
+            sourceImageHeight: { type: 'f', value : cameraHeight},
+        // load all source images
+            sourceImage          : { type : 't',  value : textureSourceImage },
+            targetCameraPosition : { type : 'v3', value : new THREE.Vector3(0, 10000, 0 ) }, 
+            targetCameraPointAt  : { type : 'v3', value : new THREE.Vector3(0,     0, 0 ) }, 
+            targetMatrixT        : { type : 'm4', value : new THREE.Matrix4()  },
+        // some parameters 
+            sourceCameraMaxRadius : { type : 'fv1',  value : sourceCameraMaxRadius },
+            sourceCameraCentroids : { type : 'v2v',  value : sourceCameraCentroids },
+            sourceCameraMatries   : { type : 'm4v',  value : sourceCameraMatries   },
+        // mouse position
+            mouseX                : { type : 'f',    value : mouseX                },
+        // target camera focus len
+            targetCameraFocusLen  : { type : 'f',    value : targetCameraFocusLen  },
+
+          };
+      if(loadTextures)
+      {
+        // load all data for merge
+        uniforms['dataParameterHi'] = { type: 't', value : textureParameterHi };
+        uniforms['dataParameterLo'] = { type: 't', value : textureParameterLo };
+        // world 3D points
+        uniforms['world3DPointsX' ] = { type : 't',    value : textureWorldPointX  };
+        uniforms['world3DPointsY' ] = { type : 't',    value : textureWorldPointY  };
+        uniforms['world3DPointsZ' ] = { type : 't',    value : textureWorldPointZ  };
+        // for testing 
+        uniforms['data'           ] = { type : 't', value : textureData };
+      }
+      var vertexShader   =  getSourceSynch('assets/SVM.vs');
+      var fragmentShader =  getSourceSynch('assets/SVM.fs');
+      var material = new THREE.ShaderMaterial({
+            defines          : defines
+          , uniforms         : uniforms
+          , vertexShader     : vertexShader
+          , fragmentShader   : fragmentShader
+        });
+
+      var plane = new THREE.Mesh(planeGeometry, material);
+
+      // rotate and position the plane
+      plane.position.x = 0;
+      plane.position.y = 0;
+      plane.position.z = 0;
+
+      // add the plane to the scene
+      scene.add(plane);
+
+      var mousePressed=false;
+
+      var webGLOutputer = document.getElementById('WebGL-output');
+      // add the output of the renderer to the html element
+      webGLOutputer.appendChild(renderer.domElement);
+
+      // add the mouse handle function for mouse input
+      webGLOutputer.onmousedown = function (e)
+        {
+          mouseX = e.layerX;
+          mousePressed = true;     
+        }
+      webGLOutputer.onmouseup = function (e)
+        {
+          mousePressed = false;    
+        }
+      webGLOutputer.onmousemove = function (e)
+        {
+          if (mousePressed)
+          {
+             mouseX = e.layerX;
+          }
+        }
+
+      // add FPS stats
+      var stats = createStats();
+
+      // add control
+      control = new function()
+      {
+        this.targetCameraFocusLen = 614.1118;
+      };
+
+      function addControls( controlObject)
+      {
+        var gui = new dat.GUI();
+        gui.add(controlObject, 'targetCameraFocusLen', 0, 800).onChange(function(value)
+                { controlObject.targetCameraFocusLen=value; });
+
+      }
+
+      addControls(control);
+
+      document.body.appendChild( stats.domElement);
+
+      render();
+
+      function render() 
+      {
+          requestAnimationFrame(render);
+
+          //control.update();
+
+          uniforms.mouseX.value = mouseX;
+          uniforms.mouseX.needsUpdate = true;
+
+          uniforms.targetCameraFocusLen.value = control.targetCameraFocusLen;
+          uniforms.targetCameraFocusLen.needsUpdate = true;
+
+          renderer.render(scene, camera);
+          stats.update();
+      }
+
+
+      // run some evaluate functions 
+      //eval_getRotateMatrixByAxes();
+
+
   }
-  var mat = new THREE.Matrix4();
-  mat.set(
-    dataArray[ 0] 
-   ,dataArray[ 1] 
-   ,dataArray[ 2] 
-   ,dataArray[ 3] 
-   ,dataArray[ 4] 
-   ,dataArray[ 5] 
-   ,dataArray[ 6] 
-   ,dataArray[ 7] 
-   ,dataArray[ 8] 
-   ,dataArray[ 9] 
-   ,dataArray[10] 
-   ,dataArray[11] 
-   ,dataArray[12] 
-   ,dataArray[13] 
-   ,dataArray[14] 
-   ,dataArray[15] 
-  );
-  return mat;
-}
 
-// read some parameters file for targetMatrixT parameter
-$.get('assets/targetMatrixT.txt', function(data) {
-  uniforms.targetMatrixT.value       = getMatrFromText(data);
-  uniforms.targetMatrixT.needsUpdate = true;
-}, 'text');
+  window.onload = init;
 
+
+  function getMatrFromText( data )
+  {
+    var rawArray  = data.split(' ');
+    var dataArray = [];
+    var numData=0;
+    for (var i=0;i<rawArray.length;i++)
+    {
+      var array = rawArray[i];
+      if( array != '')
+      {
+        dataArray[numData]=array.valueOf();
+        numData+=1;
+      }
+    }
+    var mat = new THREE.Matrix4();
+    mat.set(
+      dataArray[ 0] 
+     ,dataArray[ 1] 
+     ,dataArray[ 2] 
+     ,dataArray[ 3] 
+     ,dataArray[ 4] 
+     ,dataArray[ 5] 
+     ,dataArray[ 6] 
+     ,dataArray[ 7] 
+     ,dataArray[ 8] 
+     ,dataArray[ 9] 
+     ,dataArray[10] 
+     ,dataArray[11] 
+     ,dataArray[12] 
+     ,dataArray[13] 
+     ,dataArray[14] 
+     ,dataArray[15] 
+    );
+    return mat;
+  }
+  
+  // read some parameters file for targetMatrixT parameter
+  $.get('assets/targetMatrixT.txt', function(data) {
+    uniforms.targetMatrixT.value       = getMatrFromText(data);
+    uniforms.targetMatrixT.needsUpdate = true;
+  }, 'text');
+  
 
